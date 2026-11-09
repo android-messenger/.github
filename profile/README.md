@@ -1,48 +1,40 @@
 # Wolp Messenger для Android
 
 Android-версия мессенджера Hormiga (`org.wolpmessenger`) с доверием к устройству на аппаратном уровне.
-В приложение пускают не только по логину и паролю: нужно ещё зарегистрированное устройство, которое подтвердило свою подлинность через Android Key Attestation.
+В приложение пускают не только по логину и паролю: нужно ещё зарегистрированное устройство, которое подтвердило свою подлинность через Android Key Attestation, и оригинальное приложение, подписанное нашим ключом.
 
 ## Как это устроено
 
-- **Приложение** — оболочка Capacitor над существующим веб-клиентом. Интерфейс не переписывается на Kotlin: веб и Android используют один и тот же UI.
-- **Доверие к устройству.** Ключи создаются в TEE или StrongBox и не извлекаются. Шлюз проверяет аттестацию; программные ключи, root и разблокированный загрузчик отклоняются.
+- **Приложение** — оболочка Capacitor над веб-клиентом мессенджера; веб и Android используют одну кодовую базу UI. Принятое решение — интерфейс собирается внутрь APK и подписывается вместе с приложением (в работе; сейчас UI загружается с сервера).
+- **Доверие к устройству.** Ключи создаются в TEE (StrongBox — опционально) и не извлекаются. Шлюз проверяет аттестацию; программные ключи, root, разблокированный загрузчик и чужая подпись APK отклоняются.
 - **Взаимный TLS.** Клиентский сертификат живёт 72 часа и продлевается с новым ключом и новой аттестацией. mTLS завершается на шлюзе, бэкенд мессенджера о нём не знает.
-- **Одно устройство на пользователя.** Перерегистрация идёт только через администратора, по одноразовому паролю онбординга. Прежнее устройство при этом отзывается автоматически.
-- **RASP на устройстве.** При признаках компрометации приложение сообщает шлюзу, стирает ключи и блокируется.
-- **Push без метаданных.** FCM передаёт только сигнал «разбудись», без текста сообщений и имён.
-- **Без Google Play.** APK распространяется файлом, minSdk 33 (Android 13).
+- **Одно устройство на пользователя.** Регистрация — только по одноразовому паролю от администратора; новая регистрация отзывает прежнее устройство.
+- **RASP.** При признаках компрометации приложение сообщает шлюзу, стирает ключи и блокируется.
+- **E2EE.** Ключи Signal обёрнуты неизвлекаемым ключом в TEE.
+- **Без Google Play.** APK распространяется файлом, Android 13+.
 
 ## Репозитории
 
-| Репозиторий | Что это | Стек |
+| Репозиторий | Назначение | Состояние |
 |---|---|---|
-| [`wolp-android`](https://github.com/android-messenger/wolp-android) | Android-приложение: WebView-оболочка, FCM, звонки, обновления | Kotlin, Capacitor |
-| [`wolp-device-trust`](https://github.com/android-messenger/wolp-device-trust) | Библиотека доверия к устройству: Keystore, аттестация, mTLS-сертификаты, RASP, Vault | Kotlin |
-| [`gate`](https://github.com/android-messenger/gate) | Шлюз идентификации на базе Ory Kratos, модуль `devices` (регистрация, аттестация, реестр mTLS) и `device-signer` | Go |
-| [`firebase-push`](https://github.com/android-messenger/firebase-push) | Сервис push-уведомлений FCM для приложения | Go |
-| [`messenger`](https://github.com/android-messenger/messenger) | Веб-клиент (React PWA): работает в браузере и внутри WebView приложения | TypeScript |
-| [`HormigaMessanger`](https://github.com/android-messenger/HormigaMessanger) | Бэкенд мессенджера | Java, Quarkus |
-| [`deploy`](https://github.com/android-messenger/deploy) | Послойный one-shot деплой всего стека | Shell, Docker Compose |
-| [`docs`](https://github.com/android-messenger/docs) | Архитектурные решения и спецификации S1–S3 | — |
-
-## Схема
-
-```
- Android-устройство                    Сервер
-┌──────────────────────┐   mTLS   ┌──────────────┐     ┌──────────────────────┐
-│ wolp-android         │─────────▶│ nginx        │────▶│ HormigaMessanger     │
-│  └ messenger (WebView)│          │ + gate       │     │ (бэкенд, Kafka)      │
-│  └ wolp-device-trust │  enroll  │  (Kratos,    │     └──────────┬───────────┘
-│     (TEE/StrongBox)  │─────────▶│   devices,   │                │
-└──────────▲───────────┘          │   signer)    │       chat.offline.notify
-           │  FCM «разбудись»      └──────────────┘                │
-           └────────────────────── firebase-push ◀────────────────┘
-```
+| [`messenger-ui`](https://github.com/android-messenger/messenger-ui) | веб-клиент мессенджера (React PWA): копия фронта Hormigas с правками для Android; одна кодовая база для браузера и для приложения | правки для приложения сделаны; сборка UI внутрь APK — в работе |
+| [`gate`](https://github.com/android-messenger/gate) | шлюз: KratosGate (Ory Kratos) + модуль `devices` (регистрация, аттестация, реестр mTLS) + `device-signer` + офлайн-CA `device-ca`; один образ, три точки входа | работает |
+| [`firebase-push`](https://github.com/android-messenger/firebase-push) | будущий сервис push-уведомлений FCM для приложения; сейчас — копия кода сервиса Web Push Hormigas | FCM ещё не реализован |
+| [`messanger`](https://github.com/android-messenger/messanger) | копия бэкенда мессенджера Hormigas (Quarkus); нужна только для одной добавочной правки (отмена звонка в push) | без изменений |
+| [`wolp-android`](https://github.com/android-messenger/wolp-android) | Android-приложение: оболочка Capacitor, WebView с mTLS, мост, хранилище ключей E2EE; тестовый стенд шлюза | в работе (звонки, push, обновления — дальше) |
+| [`wolp-device-trust`](https://github.com/android-messenger/wolp-device-trust) | библиотека доверия к устройству: Keystore, аттестация, сертификаты и mTLS, RASP, Vault | готова |
+| [`deploy`](https://github.com/android-messenger/deploy) | композиция стека (Docker Compose) | в работе |
+| [`docs`](https://github.com/android-messenger/docs) | архитектура, спецификации, концепция безопасности, инструкции по установке | — |
+| [`.github`](https://github.com/android-messenger/.github) | этот публичный профиль организации | — |
 
 ## Документация
 
-Все решения (D1–D19), модель угроз и правила совместимости описаны в [`docs/ARCHITECTURE.md`](https://github.com/android-messenger/docs/blob/main/ARCHITECTURE.md). Спецификации компонентов лежат в [`docs/specs`](https://github.com/android-messenger/docs/tree/main/specs).
+- [Архитектура и решения D1–D19](https://github.com/android-messenger/docs/blob/main/ARCHITECTURE.md)
+- [Концепция безопасности](https://github.com/android-messenger/docs/tree/main/security) — модель угроз, аттестация, PKI, mTLS, RASP, E2EE
+- [Установка: сервер](https://github.com/android-messenger/docs/blob/main/install/server.md) · [телефон](https://github.com/android-messenger/docs/blob/main/install/phone.md)
+- [Спецификации S1–S3](https://github.com/android-messenger/docs/tree/main/specs)
+
+Репозитории закрытые: ссылки открываются участникам организации.
 
 ## Безопасность
 
