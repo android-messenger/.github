@@ -1,6 +1,6 @@
 # Wolp Messenger для Android
 
-Android-версия мессенджера Hormiga (`org.wolpmessenger`) с доверием к устройству на аппаратном уровне.
+Мессенджер для Android (`org.wolpmessenger`) с доверием к устройству на аппаратном уровне.
 В приложение пускают не только по логину и паролю: нужно ещё зарегистрированное устройство, которое подтвердило свою подлинность через Android Key Attestation, и оригинальное приложение, подписанное нашим ключом.
 
 ## Как это устроено
@@ -17,11 +17,11 @@ Android-версия мессенджера Hormiga (`org.wolpmessenger`) с д�
 
 | Репозиторий | Назначение | Состояние |
 |---|---|---|
-| [`messenger-ui`](https://github.com/android-messenger/messenger-ui) | веб-клиент мессенджера (React PWA): копия фронта Hormigas с правками для Android; одна кодовая база для браузера и для приложения | работает: браузер и UI внутри APK |
+| [`messenger-ui`](https://github.com/android-messenger/messenger-ui) | веб-клиент мессенджера (React PWA); одна кодовая база для браузера и для приложения | работает: браузер и UI внутри APK |
 | [`gate`](https://github.com/android-messenger/gate) | шлюз: KratosGate (Ory Kratos) + модуль `devices` (регистрация, аттестация, реестр mTLS) + `device-signer` + офлайн-CA `device-ca`; один образ, три точки входа | работает |
-| [`firebase-push`](https://github.com/android-messenger/firebase-push) | сервис push-уведомлений FCM для приложения (на основе сервиса Web Push Hormigas) | работает |
-| [`key-directory`](https://github.com/android-messenger/key-directory) | служба открытых ключей E2EE (на основе каталога ключей Hormigas): одна запись на пользователя, запись ключей только с телефона с сертификатом устройства, удаление по отзыву; учётные данные TURN | работает; проверка ключа собеседника на клиенте — в разработке |
-| [`messanger`](https://github.com/android-messenger/messanger) | копия бэкенда мессенджера Hormigas (Quarkus); нужна только для одной добавочной правки (отмена звонка в push) | правка сделана |
+| [`firebase-push`](https://github.com/android-messenger/firebase-push) | сервис push-уведомлений FCM для приложения | работает |
+| [`key-directory`](https://github.com/android-messenger/key-directory) | служба открытых ключей E2EE: одна запись на пользователя, запись ключей только с телефона с сертификатом устройства, удаление по отзыву; учётные данные TURN | работает; проверка ключа собеседника на клиенте — в разработке |
+| [`messanger`](https://github.com/android-messenger/messanger) | бэкенд мессенджера (Quarkus); здесь — одна добавочная правка (отмена звонка в push) | правка сделана |
 | [`wolp-android`](https://github.com/android-messenger/wolp-android) | Android-приложение: оболочка Capacitor, WebView с mTLS, мост, хранилище ключей E2EE; тестовый стенд шлюза | пилот: сообщения, звонки, push; автообновление — позже |
 | [`wolp-device-trust`](https://github.com/android-messenger/wolp-device-trust) | библиотека доверия к устройству: Keystore, аттестация, сертификаты и mTLS, RASP, Vault | готова |
 | [`deploy`](https://github.com/android-messenger/deploy) | композиция стека `wolpertinger` (Docker Compose, nginx, мониторинг, скрипты администратора) | работает |
