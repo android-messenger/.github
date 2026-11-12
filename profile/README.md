@@ -20,6 +20,7 @@ Android-версия мессенджера Hormiga (`org.wolpmessenger`) с д�
 | [`messenger-ui`](https://github.com/android-messenger/messenger-ui) | веб-клиент мессенджера (React PWA): копия фронта Hormigas с правками для Android; одна кодовая база для браузера и для приложения | работает: браузер и UI внутри APK |
 | [`gate`](https://github.com/android-messenger/gate) | шлюз: KratosGate (Ory Kratos) + модуль `devices` (регистрация, аттестация, реестр mTLS) + `device-signer` + офлайн-CA `device-ca`; один образ, три точки входа | работает |
 | [`firebase-push`](https://github.com/android-messenger/firebase-push) | сервис push-уведомлений FCM для приложения (на основе сервиса Web Push Hormigas) | работает |
+| [`key-directory`](https://github.com/android-messenger/key-directory) | служба открытых ключей E2EE (на основе каталога ключей Hormigas): одна запись на пользователя, запись ключей только с телефона с сертификатом устройства, удаление по отзыву; учётные данные TURN | работает; проверка ключа собеседника на клиенте — в разработке |
 | [`messanger`](https://github.com/android-messenger/messanger) | копия бэкенда мессенджера Hormigas (Quarkus); нужна только для одной добавочной правки (отмена звонка в push) | правка сделана |
 | [`wolp-android`](https://github.com/android-messenger/wolp-android) | Android-приложение: оболочка Capacitor, WebView с mTLS, мост, хранилище ключей E2EE; тестовый стенд шлюза | пилот: сообщения, звонки, push; автообновление — позже |
 | [`wolp-device-trust`](https://github.com/android-messenger/wolp-device-trust) | библиотека доверия к устройству: Keystore, аттестация, сертификаты и mTLS, RASP, Vault | готова |
@@ -29,7 +30,7 @@ Android-версия мессенджера Hormiga (`org.wolpmessenger`) с д�
 
 ## Система
 
-Один стек `wolpertinger` (Docker Compose за nginx): Ory Kratos и Oathkeeper, шлюз `gate` с модулем `devices` и `device-signer`, бэкенд мессенджера, каталог ключей E2EE, `firebase-push`, веб-клиент, свой coturn, Postgres/Kafka/Redis/MinIO, Prometheus + Alertmanager (тревоги в Telegram). Браузер ходит на `:443`, приложение — на `:8444` (вход, регистрация устройства) и `:8443` (mTLS).
+Один стек `wolpertinger` (Docker Compose за nginx): Ory Kratos и Oathkeeper, шлюз `gate` с модулем `devices` и `device-signer`, бэкенд мессенджера, служба ключей E2EE [`key-directory`](https://github.com/android-messenger/key-directory), `firebase-push`, веб-клиент, свой coturn, Postgres/Kafka/Redis/MinIO, Prometheus + Alertmanager (тревоги в Telegram). Браузер ходит на `:443`, приложение — на `:8444` (вход, регистрация устройства) и `:8443` (mTLS).
 
 | Задача | Где |
 |---|---|
